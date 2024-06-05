@@ -10,7 +10,6 @@
 //! Todo:
 //!
 //! * Add support for Adaptive Content
-//! * Add support for Actions
 //!
 //! Known Issues:
 //!
@@ -36,7 +35,9 @@ use windows::{
     core::{IInspectable, Interface},
     Data::Xml::Dom::XmlDocument,
     Foundation::TypedEventHandler,
-    UI::Notifications::{ToastActivatedEventArgs, ToastNotificationManager},
+    UI::Notifications::{
+        ToastActivatedEventArgs, ToastDismissedEventArgs, ToastNotificationManager,
+    },
 };
 
 use std::fmt::Display;
@@ -44,8 +45,28 @@ use std::fmt::Write;
 use std::path::Path;
 use std::str::FromStr;
 
-pub use windows::core::{Error, Result, HSTRING};
+pub use windows::core::HSTRING;
 pub use windows::UI::Notifications::ToastNotification;
+
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Windows API error: {0}")]
+    Os(#[from] windows::core::Error),
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// `ToastDismissalReason` is a struct representing the reason a toast notification was dismissed.
+///
+/// Variants:
+/// - `UserCanceled`: The user explicitly dismissed the toast notification.
+/// - `ApplicationHidden`: The application hid the toast notification programmatically.
+/// - `TimedOut`: The toast notification was dismissed because it timed out.
+pub use windows::UI::Notifications::ToastDismissalReason;
 
 pub struct Toast {
     duration: String,
@@ -57,6 +78,7 @@ pub struct Toast {
     app_id: String,
     scenario: String,
     on_activated: Option<TypedEventHandler<ToastNotification, IInspectable>>,
+    on_dismissed: Option<TypedEventHandler<ToastNotification, ToastDismissedEventArgs>>,
     buttons: Vec<Button>,
 }
 
@@ -245,7 +267,7 @@ pub enum Scenario {
     Default,
     /// This will be displayed pre-expanded and stay on the user's screen till dismissed. Audio will loop by default and will use alarm audio.
     Alarm,
-    /// This will be displayed pre-expanded and stay on the user's screen till dismissed..
+    /// This will be displayed pre-expanded and stay on the user's screen till dismissed.
     Reminder,
     /// This will be displayed pre-expanded in a special call format and stay on the user's screen till dismissed. Audio will loop by default and will use ringtone audio.
     IncomingCall,
@@ -254,7 +276,7 @@ pub enum Scenario {
 impl Toast {
     /// This can be used if you do not have a AppUserModelID.
     ///
-    /// However, the toast will erroniously report its origin as powershell.
+    /// However, the toast will erroneously report its origin as powershell.
     pub const POWERSHELL_APP_ID: &'static str = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\
                                                  \\WindowsPowerShell\\v1.0\\powershell.exe";
     /// Constructor for the toast builder.
@@ -276,6 +298,7 @@ impl Toast {
             app_id: app_id.to_string(),
             scenario: String::new(),
             on_activated: None,
+            on_dismissed: None,
             buttons: Vec::new(),
         }
     }
@@ -322,7 +345,7 @@ impl Toast {
             Duration::Long => "duration=\"long\"",
             Duration::Short => "duration=\"short\"",
         }
-        .to_owned();
+        .to_string();
         self
     }
 
@@ -337,7 +360,7 @@ impl Toast {
             Scenario::Reminder => "scenario=\"reminder\"",
             Scenario::IncomingCall => "scenario=\"incomingCall\"",
         }
-        .to_owned();
+        .to_string();
         self
     }
 
@@ -361,7 +384,7 @@ impl Toast {
             );
             self
         } else {
-            // Win81 rejects the above xml so we fallback to a simpler call
+            // Win81 rejects the above xml, so we fall back to a simpler call
             self.image(source, alt_text)
         }
     }
@@ -379,7 +402,7 @@ impl Toast {
             );
             self
         } else {
-            // win81 rejects the above xml so we fallback to a simpler call
+            // win81 rejects the above xml, so we fall back to a simpler call
             self.image(source, alt_text)
         }
     }
@@ -391,7 +414,7 @@ impl Toast {
     pub fn image(mut self, source: &Path, alt_text: &str) -> Toast {
         if !is_newer_than_windows81() {
             // win81 cannot have more than 1 image and shows nothing if there is more than that
-            self.images = "".to_owned();
+            self.images = String::new();
         }
         self.images = format!(
             r#"{}<image id="1" src="file:///{}" alt="{}" />"#,
@@ -425,7 +448,7 @@ impl Toast {
 
     /// Adds a button to the notification
     /// `content` is the text of the button.
-    /// `action` will be send as an argument [on_activated](Self::on_activated) when the button is clicked.
+    /// `action` will be sent as an argument [on_activated](Self::on_activated) when the button is clicked.
     pub fn add_button(mut self, content: &str, action: &str) -> Toast {
         self.buttons.push(Button {
             content: content.to_owned(),
@@ -436,12 +459,13 @@ impl Toast {
 
     // HACK: f is static so that we know the function is valid to call.
     //       this would be nice to remove at some point
-    pub fn on_activated<F: FnMut(Option<String>) -> Result<()> + Send + 'static>(
-        mut self,
-        mut f: F,
-    ) -> Self {
+    pub fn on_activated<F>(mut self, mut f: F) -> Self
+    where
+        F: FnMut(Option<String>) -> Result<()> + Send + 'static,
+    {
         self.on_activated = Some(TypedEventHandler::new(move |_, insp| {
-            f(Self::get_activated_action(insp))
+            let _ = f(Self::get_activated_action(insp));
+            Ok(())
         }));
         self
     }
@@ -459,7 +483,51 @@ impl Toast {
         None
     }
 
-    fn create_template(&self) -> windows::core::Result<ToastNotification> {
+    /// Set the function to be called when the toast is dismissed
+    /// `f` will be called with the reason the toast was dismissed.
+    /// If the toast was dismissed by the user, the reason will be `ToastDismissalReason::UserCanceled`.
+    /// If the toast was dismissed by the application, the reason will be `ToastDismissalReason::ApplicationHidden`.
+    /// If the toast was dismissed because it timed out, the reason will be `ToastDismissalReason::TimedOut`.
+    /// If the reason is unknown, the reason will be `None`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use tauri_winrt_notification::{Toast, ToastDismissalReason};
+    ///
+    /// let toast = Toast::new(Toast::POWERSHELL_APP_ID);
+    /// toast.on_dismissed(|reason| {
+    ///     match reason {
+    ///         Some(ToastDismissalReason::UserCanceled) => println!("UserCanceled"),
+    ///         Some(ToastDismissalReason::ApplicationHidden) => println!("ApplicationHidden"),
+    ///         Some(ToastDismissalReason::TimedOut) => println!("TimedOut"),
+    ///         _ => println!("Unknown"),
+    ///     }
+    ///     Ok(())
+    /// }).show().expect("notification failed");
+    /// ```
+    pub fn on_dismissed<F>(mut self, f: F) -> Self
+    where
+        F: Fn(Option<ToastDismissalReason>) -> Result<()> + Send + 'static,
+    {
+        self.on_dismissed = Some(TypedEventHandler::new(move |_, args| {
+            let _ = f(Self::get_dismissed_reason(args));
+            Ok(())
+        }));
+        self
+    }
+
+    fn get_dismissed_reason(
+        args: &Option<ToastDismissedEventArgs>,
+    ) -> Option<ToastDismissalReason> {
+        if let Some(args) = args {
+            if let Ok(reason) = args.Reason() {
+                return Some(reason);
+            }
+        }
+        None
+    }
+
+    fn create_template(&self) -> Result<ToastNotification> {
         //using this to get an instance of XmlDocument
         let toast_xml = XmlDocument::new()?;
 
@@ -488,16 +556,16 @@ impl Toast {
         }
 
         toast_xml.LoadXml(&HSTRING::from(format!(
-            "<toast {} {}>
-                    <visual>
-                        <binding template=\"{}\">
+            r#"<toast {} {}>
+                <visual>
+                    <binding template="{}">
                         {}
                         {}{}{}
-                        </binding>
-                    </visual>
-                    {}
-                    {}
-                </toast>",
+                    </binding>
+                </visual>
+                {}
+                {}
+            </toast>"#,
             self.duration,
             self.scenario,
             template_binding,
@@ -510,21 +578,25 @@ impl Toast {
         )))?;
 
         // Create the toast
-        ToastNotification::CreateToastNotification(&toast_xml)
+        ToastNotification::CreateToastNotification(&toast_xml).map_err(Into::into)
     }
 
     /// Display the toast on the screen
-    pub fn show(&self) -> windows::core::Result<()> {
+    pub fn show(&self) -> Result<()> {
         let toast_template = self.create_template()?;
         if let Some(handler) = &self.on_activated {
             toast_template.Activated(handler)?;
+        }
+
+        if let Some(handler) = &self.on_dismissed {
+            toast_template.Dismissed(handler)?;
         }
 
         let toast_notifier =
             ToastNotificationManager::CreateToastNotifierWithId(&HSTRING::from(&self.app_id))?;
 
         // Show the toast.
-        let result = toast_notifier.Show(&toast_template);
+        let result = toast_notifier.Show(&toast_template).map_err(Into::into);
         std::thread::sleep(std::time::Duration::from_millis(10));
         result
     }
