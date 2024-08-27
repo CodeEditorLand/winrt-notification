@@ -20,7 +20,7 @@ Limitations:
 -   Windows 8.1 only supports a single image, the last image (icon, hero, image)
     will be the one on the toast
 
-## Usage
+## 🛠️ Usage
 
 ```toml
 #Cargo.toml
