@@ -1,11 +1,8 @@
 [package]
 name = "tauri-winrt-notification"
 version = "0.6.0"
-authors = [
-  "allenbenz",
-  "Tauri Programme within The Commons Conservancy"
-]
-keywords = [ "notification", "windows", "toast", "notify" ]
+authors = ["allenbenz", "Tauri Programme within The Commons Conservancy"]
+keywords = ["notification", "windows", "toast", "notify"]
 readme = "README.md"
 description = "An incomplete wrapper over the WinRT toast api"
 documentation = "https://docs.rs/tauri-winrt-notification/"
@@ -22,12 +19,12 @@ quick-xml = "0.31"
 thiserror = "1.0"
 windows-version = "0.1"
 
-  [dependencies.windows]
-  version = "0.58"
-  features = [
-  "Win32_Foundation",
-  "Foundation_Collections",
-  "Win32_System_SystemInformation",
-  "Data_Xml_Dom",
-  "UI_Notifications"
+[dependencies.windows]
+version = "0.58"
+features = [
+	"Win32_Foundation",
+	"Foundation_Collections",
+	"Win32_System_SystemInformation",
+	"Data_Xml_Dom",
+	"UI_Notifications",
 ]
