@@ -3,19 +3,22 @@
 [![license](https://img.shields.io/crates/l/tauri-winrt-notification.svg)](https://crates.io/crates/tauri-winrt-notification/)
 [![documentation](https://img.shields.io/crates/v/tauri-winrt-notification?style=flat-square)](https://docs.rs/tauri-winrt-notification)
 
-
 An incomplete wrapper over the WinRT toast api
 
 Tested in Windows 10 and 8.1. Untested in Windows 8, might work.
 
 Todo:
-* Add support for Adaptive Content
+
+-   Add support for Adaptive Content
 
 Known Issues:
-* Will not work for Windows 7.
+
+-   Will not work for Windows 7.
 
 Limitations:
-* Windows 8.1 only supports a single image, the last image (icon, hero, image) will be the one on the toast
+
+-   Windows 8.1 only supports a single image, the last image (icon, hero, image)
+    will be the one on the toast
 
 ## Usage
 

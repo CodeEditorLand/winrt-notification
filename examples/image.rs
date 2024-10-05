@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::path::Path;
+
 use tauri_winrt_notification::{IconCrop, Toast};
 
 fn main() {

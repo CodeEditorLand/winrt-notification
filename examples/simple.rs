@@ -24,8 +24,12 @@ fn main() {
 		.add_button("No", "no")
 		.on_dismissed(|reason| {
 			match reason {
-				Some(ToastDismissalReason::UserCanceled) => println!("UserCanceled"),
-				Some(ToastDismissalReason::ApplicationHidden) => println!("ApplicationHidden"),
+				Some(ToastDismissalReason::UserCanceled) => {
+					println!("UserCanceled")
+				},
+				Some(ToastDismissalReason::ApplicationHidden) => {
+					println!("ApplicationHidden")
+				},
 				Some(ToastDismissalReason::TimedOut) => println!("TimedOut"),
 				_ => println!("Unknown"),
 			}
