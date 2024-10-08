@@ -6,21 +6,21 @@
 use tauri_winrt_notification::{Duration, Sound, Toast};
 
 fn main() {
-	let duration = Duration::Short;
-	let sound = Some(Sound::SMS);
+    let duration = Duration::Short;
+    let sound = Some(Sound::SMS);
 
-	let toast = Toast::new(Toast::POWERSHELL_APP_ID)
-		.title("first toast")
-		.text1("line1")
-		.duration(duration)
-		.sound(sound);
+    let toast = Toast::new(Toast::POWERSHELL_APP_ID)
+        .title("first toast")
+        .text1("line1")
+        .duration(duration)
+        .sound(sound);
 
-	toast
+    toast
         .show()
         // silently consume errors
         .expect("notification failed");
 
-	toast
+    toast
         .show()
         // silently consume errors
         .expect("notification failed");
