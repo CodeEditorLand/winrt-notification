@@ -6,11 +6,11 @@
 use tauri_winrt_notification::{Duration, Toast};
 
 fn main() {
-    Toast::new(Toast::POWERSHELL_APP_ID)
-        .title("Look at this flip!")
-        .text1("(╯°□°）╯︵ ┻━┻")
-        .sound("Alarm5".try_into().ok())
-        .duration(Duration::Short)
-        .show()
-        .expect("unable to send notification");
+	Toast::new(Toast::POWERSHELL_APP_ID)
+		.title("Look at this flip!")
+		.text1("(╯°□°）╯︵ ┻━┻")
+		.sound("Alarm5".try_into().ok())
+		.duration(Duration::Short)
+		.show()
+		.expect("unable to send notification");
 }
