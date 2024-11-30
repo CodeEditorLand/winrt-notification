@@ -360,6 +360,7 @@ impl Toast {
             r#"<text id="1">{}</text>"#,
             &quick_xml::escape::escape(content)
         );
+
         self
     }
 
@@ -372,6 +373,7 @@ impl Toast {
             r#"<text id="2">{}</text>"#,
             &quick_xml::escape::escape(content)
         );
+
         self
     }
 
@@ -384,6 +386,7 @@ impl Toast {
             r#"<text id="3">{}</text>"#,
             &quick_xml::escape::escape(content)
         );
+
         self
     }
 
@@ -394,6 +397,7 @@ impl Toast {
             Duration::Short => "duration=\"short\"",
         }
         .to_string();
+
         self
     }
 
@@ -409,6 +413,7 @@ impl Toast {
             Scenario::IncomingCall => "scenario=\"incomingCall\"",
         }
         .to_string();
+
         self
     }
 
@@ -430,6 +435,7 @@ impl Toast {
                 quick_xml::escape::escape(&source.display().to_string()),
                 quick_xml::escape::escape(alt_text)
             );
+
             self
         } else {
             // Win81 rejects the above xml, so we fall back to a simpler call
@@ -448,6 +454,7 @@ impl Toast {
                 quick_xml::escape::escape(&source.display().to_string()),
                 quick_xml::escape::escape(alt_text)
             );
+
             self
         } else {
             // win81 rejects the above xml, so we fall back to a simpler call
@@ -464,12 +471,14 @@ impl Toast {
             // win81 cannot have more than 1 image and shows nothing if there is more than that
             self.images = String::new();
         }
+
         self.images = format!(
             r#"{}<image id="1" src="file:///{}" alt="{}" />"#,
             self.images,
             quick_xml::escape::escape(&source.display().to_string()),
             quick_xml::escape::escape(alt_text)
         );
+
         self
     }
 
@@ -502,12 +511,14 @@ impl Toast {
             content: content.to_owned(),
             action: action.to_owned(),
         });
+
         self
     }
 
     /// Set the progress for the toast
     pub fn progress(mut self, progress: &Progress) -> Toast {
         self.progress = Some(progress.clone());
+
         self
     }
 
@@ -519,8 +530,10 @@ impl Toast {
     {
         self.on_activated = Some(TypedEventHandler::new(move |_, insp| {
             let _ = f(Self::get_activated_action(insp));
+
             Ok(())
         }));
+
         self
     }
 
@@ -534,6 +547,7 @@ impl Toast {
                 }
             }
         }
+
         None
     }
 
@@ -565,8 +579,10 @@ impl Toast {
     {
         self.on_dismissed = Some(TypedEventHandler::new(move |_, args| {
             let _ = f(Self::get_dismissed_reason(args));
+
             Ok(())
         }));
+
         self
     }
 
@@ -578,6 +594,7 @@ impl Toast {
                 return Some(reason);
             }
         }
+
         None
     }
 
@@ -602,8 +619,10 @@ impl Toast {
         };
 
         let mut actions = String::new();
+
         if !self.buttons.is_empty() {
             let _ = write!(actions, "<actions>");
+
             for b in &self.buttons {
                 let _ = write!(
                     actions,
@@ -611,6 +630,7 @@ impl Toast {
                     b.content, b.action
                 );
             }
+
             let _ = write!(actions, "</actions>");
         }
 
@@ -678,9 +698,13 @@ impl Toast {
     /// ```
     pub fn set_progress(&self, progress: &Progress) -> Result<NotificationUpdateResult> {
         let map = StringMap::new()?;
+
         map.Insert(&HSTRING::from("progressTitle"), &progress.title())?;
+
         map.Insert(&HSTRING::from("progressStatus"), &progress.status())?;
+
         map.Insert(&HSTRING::from("progressValue"), &progress.value())?;
+
         map.Insert(
             &HSTRING::from("progressValueString"),
             &progress.value_string(),
@@ -699,6 +723,7 @@ impl Toast {
     /// Display the toast on the screen
     pub fn show(&self) -> Result<()> {
         let toast_template = self.create_template()?;
+
         if let Some(handler) = &self.on_activated {
             toast_template.Activated(handler)?;
         }
@@ -714,9 +739,13 @@ impl Toast {
             toast_template.SetTag(&progress.tag())?;
 
             let map = StringMap::new()?;
+
             map.Insert(&HSTRING::from("progressTitle"), &progress.title())?;
+
             map.Insert(&HSTRING::from("progressStatus"), &progress.status())?;
+
             map.Insert(&HSTRING::from("progressValue"), &progress.value())?;
+
             map.Insert(
                 &HSTRING::from("progressValueString"),
                 &progress.value_string(),
@@ -724,18 +753,22 @@ impl Toast {
 
             let data =
                 NotificationData::CreateNotificationDataWithValuesAndSequenceNumber(&map, 1)?;
+
             toast_template.SetData(&data)?;
         }
 
         // Show the toast.
         let result = toast_notifier.Show(&toast_template).map_err(Into::into);
+
         std::thread::sleep(std::time::Duration::from_millis(10));
+
         result
     }
 }
 
 fn is_newer_than_windows81() -> bool {
     let os = windows_version::OsVersion::current();
+
     os.major > 6
 }
 
@@ -746,6 +779,7 @@ mod tests {
     #[test]
     fn simple_toast() {
         let toast = Toast::new(Toast::POWERSHELL_APP_ID);
+
         toast
             .hero(
                 &Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/test/flower.jpeg"),

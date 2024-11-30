@@ -7,6 +7,7 @@ use tauri_winrt_notification::{Duration, Sound, Toast};
 
 fn main() {
 	let duration = Duration::Short;
+
 	let sound = Some(Sound::SMS);
 
 	Toast::new(Toast::POWERSHELL_APP_ID)

@@ -18,6 +18,7 @@ fn main() {
 				Some(action) => println!("You've clicked {}!", action),
 				None => println!("You've clicked me!"),
 			}
+
 			exit(0);
 		})
 		.add_button("Yes", "yes")
@@ -29,12 +30,15 @@ fn main() {
 				Some(ToastDismissalReason::TimedOut) => println!("TimedOut"),
 				_ => println!("Unknown"),
 			}
+
 			exit(0)
 		})
 		.show()
 		.expect("unable to send notification");
 
 	println!("Waiting 10 seconds for the notification to be clicked...");
+
 	sleep(StdDuration::from_secs(10));
+
 	println!("The notification wasn't clicked!");
 }

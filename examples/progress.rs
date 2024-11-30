@@ -20,12 +20,14 @@ fn main() {
         .text1("Transferring files to your computer...")
         .progress(&progress)
         .duration(Duration::Long);
+
     toast.show().expect("notification failed");
 
     for i in 1..=10 {
         sleep(StdDuration::from_secs(1));
 
         progress.value = i as f32 / 10.0;
+
         progress.value_string = format!("{}/1000 MB", i * 100);
 
         if i == 10 {
@@ -37,12 +39,15 @@ fn main() {
                 NotificationUpdateResult::Succeeded => {
                     println!("notification updated successfully.");
                 }
+
                 NotificationUpdateResult::Failed => {
                     println!("failed to update notification")
                 }
+
                 NotificationUpdateResult::NotificationNotFound => {
                     println!("notification not found. Please ensure the notification ID and Tag are correct.");
                 }
+
                 _ => println!("unknown notification update result"),
             }
         };
