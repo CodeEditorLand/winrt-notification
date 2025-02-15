@@ -1,26 +1,9 @@
-[package]
-name = "tauri-winrt-notification"
-version = "0.7.0"
-authors = ["allenbenz", "Tauri Programme within The Commons Conservancy"]
-keywords = ["notification", "windows", "toast", "notify"]
-readme = "README.md"
-description = "An incomplete wrapper over the WinRT toast api"
-documentation = "https://docs.rs/tauri-winrt-notification/"
-repository = "https://github.com/tauri-apps/winrt-notification"
-license-file = "LICENSE"
-edition = "2021"
-rust-version = "1.70"
-
-[package.metadata.docs.rs]
-default-target = "x86_64-pc-windows-msvc"
-
 [dependencies]
 quick-xml = "0.31"
 thiserror = { version = "1.0" }
 windows-version = "0.1"
 
 [dependencies.windows]
-version = "0.58"
 features = [
 	"Win32_Foundation",
 	"Foundation_Collections",
@@ -28,3 +11,27 @@ features = [
 	"Data_Xml_Dom",
 	"UI_Notifications",
 ]
+version = "0.58"
+
+[lib]
+path = "Source/lib.rs"
+
+[package]
+authors = ["allenbenz", "Tauri Programme within The Commons Conservancy"]
+description = "An incomplete wrapper over the WinRT toast api"
+documentation = "https://docs.rs/tauri-winrt-notification/"
+edition = "2021"
+keywords = ["notification", "windows", "toast", "notify"]
+license-file = "LICENSE"
+name = "tauri-winrt-notification"
+readme = "README.md"
+repository = "https://github.com/tauri-apps/winrt-notification"
+rust-version = "1.70"
+version = "0.7.0"
+
+[package.metadata]
+
+[package.metadata.docs]
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
