@@ -1,6 +1,6 @@
 [dependencies]
-quick-xml = "0.31"
-thiserror = { version = "1.0" }
+quick-xml = "0.37"
+thiserror = { version = "2.0" }
 windows-version = "0.1"
 
 [dependencies.windows]
@@ -11,7 +11,7 @@ features = [
 	"Data_Xml_Dom",
 	"UI_Notifications",
 ]
-version = "0.58"
+version = "0.59"
 
 [lib]
 path = "Source/lib.rs"
@@ -20,13 +20,13 @@ path = "Source/lib.rs"
 authors = ["allenbenz", "Tauri Programme within The Commons Conservancy"]
 description = "An incomplete wrapper over the WinRT toast api"
 documentation = "https://docs.rs/tauri-winrt-notification/"
-edition = "2021"
+edition = "2024"
 keywords = ["notification", "windows", "toast", "notify"]
 license-file = "LICENSE"
 name = "tauri-winrt-notification"
 readme = "README.md"
 repository = "https://github.com/tauri-apps/winrt-notification"
-rust-version = "1.70"
+rust-version = "1.85.0"
 version = "0.7.0"
 
 [package.metadata]
